@@ -6,6 +6,7 @@ vector<vector<int>> box;
 vector<vector<int>> visited;
 vector<pair<int, int>> monster;
 vector<vector<pair<int, int>>> timer;
+vector<vector<pair<int, int>>> par;
 vector<char> path;
 
 int xx[4] = {1, -1, 0, 0};
@@ -13,17 +14,15 @@ int yy[4] = {0, 0, 1, -1};
 
 bool is_valid(int x, int y)
 {
-    bool flag = false;
+
     if (x >= n || y >= m || x < 0 || y < 0 || visited[x][y] == 1)
     {
-        return flag;
+        return false;
     }
     else
     {
-        flag = true;
+        return true;
     }
-
-    return flag;
 }
 
 void monster_move()
@@ -56,6 +55,8 @@ void monster_move()
 
 void my_move(int i, int j)
 {
+    par[i][j].first = -1;
+    par[i][j].second = -1;
     queue<pair<int, int>> q;
     q.push({i, j});
 
@@ -73,46 +74,46 @@ void my_move(int i, int j)
             {
                 visited[child.first][child.second] = 1;
                 timer[child.first][child.second].second = timer[parent.first][parent.second].second + 1;
+                par[child.first][child.second] = {parent.first, parent.second};
                 q.push(child);
             }
         }
     }
 }
 
-void find_path()
+vector<char> find_path()
 {
-    visited[a][b] = 1;
-    int ta = a, tb = b;
+    vector<char> path;
+    vector<pair<int, int>> temp;
 
-    for (int i = 0; i < 4; i++)
+    int x = exita, y = exitb;
+    // pair<int, int> z;
+
+    while (x != -1 && y != -1)
     {
-        ta += xx[i];
-        tb += yy[i];
-        if (timer[ta][tb].first > timer[ta][tb].second && visited[ta][tb] == 0)
-        {
-            visited[ta][tb] = 1;
-            switch (i)
-            {
-            case 0:
-                path.push_back('D');
-                //break;
-            case 1:
-                path.push_back('U');
-                // break;
-            case 2:
-                path.push_back('R');
-                // break;
-            case 3:
-                path.push_back('L');
-                // break;
-            }
-        }
-
-        if (ta == exita && tb == exitb)
-        {
-            break;
-        }
+        temp.push_back({x, y});
+        auto p = par[x][y];
+        x = p.first;
+        y = p.second;
     }
+
+    reverse(temp.begin(), temp.end());
+    for (size_t i = 1; i < temp.size(); ++i)
+    {
+        int dx = temp[i].first - temp[i - 1].first;
+        int dy = temp[i].second - temp[i - 1].second;
+
+        if (dx == 1 && dy == 0)
+            path.push_back('D');
+        else if (dx == -1 && dy == 0)
+            path.push_back('U');
+        else if (dx == 0 && dy == 1)
+            path.push_back('R');
+        else if (dx == 0 && dy == -1)
+            path.push_back('L');
+    }
+
+    return path;
 }
 
 int main()
@@ -121,6 +122,7 @@ int main()
     cin >> n >> m;
     box.resize(n, vector<int>(m, 0));
     timer.resize(n, vector<pair<int, int>>(m, {0, 0}));
+    par.resize(n, vector<pair<int, int>>(m, {0, 0}));
     visited.resize(n, vector<int>(m, 0));
     for (int i = 0; i < n; i++)
     {
@@ -157,14 +159,6 @@ int main()
     }
     monster_move();
 
-    // for (int i = 0; i < n; i++)
-    // {
-    //     for (int j = 0; j < m; j++)
-    //     {
-    //         cout << timer[i][j].first << " ";
-    //     }
-    //     cout << endl;
-    // }
     visited = box;
     for (auto i : monster)
     {
@@ -172,17 +166,6 @@ int main()
     }
     visited[a][b] = 1;
     my_move(a, b);
-
-    // cout << "\n\n";
-
-    // for (int i = 0; i < n; i++)
-    // {
-    //     for (int j = 0; j < m; j++)
-    //     {
-    //         cout << timer[i][j].second << " ";
-    //     }
-    //     cout << endl;
-    // }
 
     bool ans = false;
     for (int i = 0, k = n - 1, j = 0; j < m; j++)
@@ -192,6 +175,7 @@ int main()
             ans = true;
             exita = i;
             exitb = j;
+            dist = timer[i][j].second;
             break;
         }
         if (timer[k][j].first > timer[k][j].second)
@@ -199,6 +183,7 @@ int main()
             ans = true;
             exita = k;
             exitb = j;
+            dist = timer[k][j].second;
             break;
         }
     }
@@ -211,6 +196,7 @@ int main()
                 ans = true;
                 exita = i;
                 exitb = j;
+                dist = timer[i][j].second;
                 break;
             }
             if (timer[i][k].first > timer[i][k].second)
@@ -218,6 +204,7 @@ int main()
                 ans = true;
                 exita = i;
                 exitb = k;
+                dist = timer[i][k].second;
                 break;
             }
         }
@@ -230,13 +217,12 @@ int main()
     else
     {
         visited = box;
-        find_path();
         cout << "YES" << endl;
+        cout << dist << endl;
+        vector<char> path = find_path();
         for (auto x : path)
         {
             cout << x;
         }
     }
-
-
 }
